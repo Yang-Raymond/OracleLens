@@ -29,7 +29,10 @@ module.exports = {
             // Skip if the image couldn't be analyzed
             if (analysisResponse) {
                 updateStats(analysisResponse);
+                message.send(`Image processed and stats updated!`);
             }
+
+            message.send(`Image can't be processed. Please ensure it's a clear League of Legends scoreboard.`);
         }
     },
 };

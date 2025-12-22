@@ -8,13 +8,17 @@ module.exports = {
             .setRequired(true)),
     async execute(interaction) {
         const stats = JSON.parse(fs.readFileSync('stats.json'));
-        stats.forEach(player => {
-            if (player.username === interaction.options.getString('username')) {
-                interaction.reply(`Stats for **${player.username}**:\nWins: ${player.wins}\nLosses: ${player.losses}\nGames Played: ${player.wins + player.losses}\nWinrate: ${(player.wins / (player.wins + player.losses) * 100).toFixed(2)}%\nKills: ${player.kills}\nDeaths: ${player.deaths}\nAssists: ${player.assists}\nKA/D: ${((player.kills + player.assists) / player.deaths).toFixed(2)}`);
-                return;
-            } else {
-                interaction.reply(`Player **${interaction.options.getString('username')}** not found.`);
-            }
-        });
+        const username = interaction.options.getString('username');
+        const player = stats.find(p => p.username.toLowerCase() === username.toLowerCase());
+        
+        if (player) {
+            const gamesPlayed = player.wins + player.losses;
+            const winrate = gamesPlayed > 0 ? (player.wins / gamesPlayed * 100).toFixed(2) : 0;
+            const kad = player.deaths > 0 ? ((player.kills + player.assists) / player.deaths).toFixed(2) : 'Perfect';
+            
+            await interaction.reply(`Stats for **${player.username}**:\nWins: ${player.wins}\nLosses: ${player.losses}\nGames Played: ${gamesPlayed}\nWinrate: ${winrate}%\nKills: ${player.kills}\nDeaths: ${player.deaths}\nAssists: ${player.assists}\nKA/D: ${kad}`);
+        } else {
+            await interaction.reply(`Player **${username}** not found.`);
+        }
     }
 }
