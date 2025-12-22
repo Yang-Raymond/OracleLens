@@ -1,11 +1,25 @@
+/**
+ * @file stats.js
+ * @description Slash command to retrieve and display player statistics.
+ */
+
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 
 module.exports = {
+    /**
+     * The data for the slash command.
+     * @type {SlashCommandBuilder}
+     */
     data: new SlashCommandBuilder().setName('stats').setDescription('Get player\'s stats!').addStringOption(option =>
         option.setName('username')
             .setDescription('The username of the player')
             .setRequired(true)),
+    
+    /**
+     * Executes the stats command.
+     * @param {import('discord.js').ChatInputCommandInteraction} interaction - The interaction object.
+     */
     async execute(interaction) {
         const stats = JSON.parse(fs.readFileSync('stats.json'));
         const username = interaction.options.getString('username');

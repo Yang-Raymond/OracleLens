@@ -1,7 +1,18 @@
+/**
+ * @file index.js
+ * @description Main entry point for the Discord bot.
+ * Initializes the client, loads commands and events, and logs in to Discord.
+ */
+
 require('dotenv').config();
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags } = require('discord.js');
+
+/**
+ * The Discord client instance.
+ * @type {Client}
+ */
 const client = new Client({
     intents: [GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
@@ -13,6 +24,7 @@ client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
 
+// Load commands
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
@@ -27,6 +39,7 @@ for (const file of commandFiles) {
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
 
+// Load events
 for (const file of eventFiles) {
     const filePath = path.join(eventsPath, file);
     const event = require(filePath);

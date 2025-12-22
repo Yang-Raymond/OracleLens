@@ -1,7 +1,16 @@
+/**
+ * @file interactionCreate.js
+ * @description Event handler for when an interaction is created (e.g., slash command).
+ */
+
 const { Events, MessageFlags } = require('discord.js');
 
 module.exports = {
 	name: Events.InteractionCreate,
+	/**
+	 * Executes the interaction create event.
+	 * @param {import('discord.js').Interaction} interaction - The interaction object.
+	 */
 	async execute(interaction) {
 		if (!interaction.isChatInputCommand()) return;
 

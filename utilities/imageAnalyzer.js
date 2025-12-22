@@ -1,6 +1,16 @@
+/**
+ * @file imageAnalyzer.js
+ * @description Utility to analyze League of Legends scoreboard images using Google Gemini AI.
+ */
+
 const { GoogleGenAI } = require("@google/genai");
 const fs = require("node:fs");
 
+/**
+ * Analyzes a League of Legends scoreboard image.
+ * @param {string} imagePath - The path to the image file.
+ * @returns {Promise<Array<{username: string, kills: number, deaths: number, assists: number, win: boolean}>|null>} The analyzed data or null if not enough information.
+ */
 async function LeagueScoreboardAnalyzer(imagePath) {
     const ai = new GoogleGenAI({});
     const base64ImageFile = fs.readFileSync(imagePath, {

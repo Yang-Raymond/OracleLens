@@ -1,3 +1,10 @@
+/**
+ * @file deploy-commands.js
+ * @description Script to register and deploy slash commands to the Discord API.
+ * This script reads all command files from the 'commands' directory and registers them
+ * with the Discord REST API.
+ */
+
 require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 const fs = require('node:fs');

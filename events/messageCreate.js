@@ -1,3 +1,10 @@
+/**
+ * @file messageCreate.js
+ * @description Event handler for when a message is created.
+ * Checks for image attachments in a specific channel, analyzes them for League of Legends scoreboard data,
+ * and updates player statistics.
+ */
+
 require('dotenv').config();
 const { Events } = require('discord.js');
 const fs = require('fs');
@@ -6,6 +13,10 @@ const { updateStats } = require('../utilities/updateStats.js');
 
 module.exports = {
     name: Events.MessageCreate,
+    /**
+     * Executes the message create event.
+     * @param {import('discord.js').Message} message - The message object.
+     */
     async execute(message) {
         if (message.author.bot) return;
         if (message.channel.id !== process.env.CHANNEL_ID) return;

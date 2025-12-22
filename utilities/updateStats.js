@@ -1,6 +1,16 @@
+/**
+ * @file updateStats.js
+ * @description Utility to update the stats.json file with new player data.
+ */
+
 const fs = require('fs');
 const path = require('path');
 
+/**
+ * Updates the stats.json file with the provided analysis response.
+ * @param {Array<{username: string, kills: number, deaths: number, assists: number, win: boolean}>} analysisResponse - The data to update.
+ * @returns {Array<Object>} The updated stats array.
+ */
 function updateStats(analysisResponse) {
     const statsPath = path.join(__dirname, '..', 'stats.json');
     
