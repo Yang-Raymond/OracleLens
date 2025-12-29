@@ -38,7 +38,7 @@ If you do not have enough information or if the image doesn't look like a League
     ];
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: contents,
     });
 

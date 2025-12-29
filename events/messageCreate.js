@@ -29,21 +29,28 @@ module.exports = {
         if (imageAttachments.size === 0) return; // No image found
 
         for (const attachment of imageAttachments.values()) {
-            const response = await fetch(attachment.url);
-            const buffer = Buffer.from(await response.arrayBuffer());
-            const imagePath = `./image/${attachment.name}`;
+            try {
+                const response = await fetch(attachment.url);
+                const buffer = Buffer.from(await response.arrayBuffer());
+                const imagePath = `./image/${attachment.name}`;
 
-            fs.writeFileSync(imagePath, buffer);
+                fs.writeFileSync(imagePath, buffer);
 
-            const analysisResponse = await LeagueScoreboardAnalyzer(imagePath);
+                const analysisResponse = await LeagueScoreboardAnalyzer(imagePath);
 
-            // Skip if the image couldn't be analyzed
-            if (analysisResponse) {
-                updateStats(analysisResponse);
-                message.send(`Image processed and stats updated!`);
+                // Skip if the image couldn't be analyzed
+                if (analysisResponse) {
+                    updateStats(analysisResponse);
+                    await message.reply(`Image processed and stats updated! Please check if stats are correct. If not contact Ricky Lao.\n${JSON.stringify(analysisResponse)}`);
+                } else {
+                    await message.reply(`Image can't be processed. Please ensure it's a clear League of Legends scoreboard.`);
+                }
+            } catch (error) {
+                console.error('Error processing image:', error);
+                if (error.code === 50013) {
+                    console.error('Missing Permissions: Please ensure the bot has "Send Messages" and "View Channel" permissions in the channel.');
+                }
             }
-
-            message.send(`Image can't be processed. Please ensure it's a clear League of Legends scoreboard.`);
         }
     },
 };
