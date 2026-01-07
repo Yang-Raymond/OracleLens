@@ -4,7 +4,6 @@
  */
 
 const { Events, MessageFlags } = require('discord.js');
-const { updateStats } = require('../utilities/updateStats.js');
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -51,13 +50,6 @@ module.exports = {
 				await command.autocomplete(interaction);
 			} catch (error) {
 				console.error(error);
-			}
-		} else if (interaction.isButton()) {
-			if (interaction.customId === 'confirm') {
-				updateStats();
-				await interaction.update({ content: 'Stats have been updated successfully!', components: [] });
-			} else if (interaction.customId === 'cancel') {
-				await interaction.update({ content: 'Operation cancelled. Stats were not updated.', components: [] });
 			}
 		}
 	}

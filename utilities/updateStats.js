@@ -7,13 +7,12 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Updates the stats.json file with the provided analysis response in gameStats.json.
- * @param {Array<{username: string, kills: number, deaths: number, assists: number, win: boolean}>} analysisResponse - The data to update.
+ * Updates the stats.json file with the provided analysis response.
+ * @param {Array<{username: string, kills: number, deaths: number, assists: number, win: boolean}>} [manualData] - The data to update. If not provided, reads from gameStats.json.
  * @returns {Array<Object>} The updated stats array.
  */
-function updateStats() {
+function updateStats(manualData) {
     const statsPath = path.join(__dirname, '..', 'stats.json');
-    const gameStatsPath = path.join(__dirname, '..', 'gameStats.json');
     
     // Read existing stats
     let existingStats = [];
@@ -21,9 +20,20 @@ function updateStats() {
         const data = fs.readFileSync(statsPath, 'utf8');
         existingStats = JSON.parse(data);
     }
-    // Read new game stats
-    const gameStatsData = fs.readFileSync(gameStatsPath, 'utf8');
-    const analysisResponse = JSON.parse(gameStatsData);
+
+    let analysisResponse = manualData;
+
+    // Fallback to reading from file if no data passed (backward compatibility)
+    if (!analysisResponse) {
+        const gameStatsPath = path.join(__dirname, '..', 'gameStats.json');
+        if (fs.existsSync(gameStatsPath)) {
+            const gameStatsData = fs.readFileSync(gameStatsPath, 'utf8');
+            analysisResponse = JSON.parse(gameStatsData);
+        } else {
+            console.error('No data provided and gameStats.json not found.');
+            return existingStats;
+        }
+    }
 
     // Update stats for each player in the game stats
     for (const player of analysisResponse) {
@@ -33,11 +43,11 @@ function updateStats() {
 
         if (existingPlayer) {
             // Update existing player stats
-            existingPlayer.kills += player.kills;
-            existingPlayer.deaths += player.deaths;
-            existingPlayer.assists += player.assists;
-            existingPlayer.wins += player.win ? 1 : 0;
-            existingPlayer.losses += player.win ? 0 : 1;
+            existingPlayer.kills = (existingPlayer.kills || 0) + player.kills;
+            existingPlayer.deaths = (existingPlayer.deaths || 0) + player.deaths;
+            existingPlayer.assists = (existingPlayer.assists || 0) + player.assists;
+            existingPlayer.wins = (existingPlayer.wins || 0) + (player.win ? 1 : 0);
+            existingPlayer.losses = (existingPlayer.losses || 0) + (player.win ? 0 : 1);
         } else {
             // Add new player
             existingStats.push({

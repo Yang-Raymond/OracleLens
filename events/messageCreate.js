@@ -10,6 +10,7 @@ const { Events, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discor
 const fs = require('fs');
 const { LeagueScoreboardAnalyzer } = require('../utilities/imageAnalyzer.js');
 const path = require('path');
+const { updateStats } = require('../utilities/updateStats.js');
 
 module.exports = {
     name: Events.MessageCreate,
@@ -43,9 +44,25 @@ module.exports = {
                 const cancelBtn = new ButtonBuilder().setCustomId('cancel').setLabel('Cancel').setStyle(ButtonStyle.Danger);
                 const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
-                await message.reply({ content: `Image processed and stats updated! Please react to this message if the stats are correct.\n${JSON.stringify(analysisResponse)}`, components: [row] });
-                const gameStats = path.join(__dirname, '..', 'gameStats.json');
-                fs.writeFileSync(gameStats, JSON.stringify(analysisResponse, null, 4), 'utf8');
+                const reply = await message.reply({ 
+                    content: `Image processed! Please confirm to update stats.\n${JSON.stringify(analysisResponse)}`, 
+                    components: [row] 
+                });
+
+                const filter = i => (i.customId === 'confirm' || i.customId === 'cancel') && i.user.id === message.author.id;
+
+                try {
+                    const confirmation = await reply.awaitMessageComponent({ filter, time: 60000 });
+
+                    if (confirmation.customId === 'confirm') {
+                        updateStats(analysisResponse);
+                        await confirmation.update({ content: 'Stats have been updated successfully!', components: [] });
+                    } else if (confirmation.customId === 'cancel') {
+                        await confirmation.update({ content: 'Operation cancelled. Stats were not updated.', components: [] });
+                    }
+                } catch (e) {
+                    await reply.edit({ content: 'Confirmation timed out. Stats were not updated.', components: [] });
+                }
 
             } else {
                 await message.reply(`Image can't be processed. Please ensure it's a clear League of Legends scoreboard.`);
