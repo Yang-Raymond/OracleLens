@@ -6,10 +6,10 @@
  */
 
 require('dotenv').config();
-const { Events } = require('discord.js');
+const { Events, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const fs = require('fs');
 const { LeagueScoreboardAnalyzer } = require('../utilities/imageAnalyzer.js');
-const { updateStats } = require('../utilities/updateStats.js');
+const path = require('path');
 
 module.exports = {
     name: Events.MessageCreate,
@@ -29,27 +29,26 @@ module.exports = {
         if (imageAttachments.size === 0) return; // No image found
 
         for (const attachment of imageAttachments.values()) {
-            try {
-                const response = await fetch(attachment.url);
-                const buffer = Buffer.from(await response.arrayBuffer());
-                const imagePath = `./image/${attachment.name}`;
+            const response = await fetch(attachment.url);
+            const buffer = Buffer.from(await response.arrayBuffer());
+            const imagePath = `./image/${attachment.name}`;
 
-                fs.writeFileSync(imagePath, buffer);
+            fs.writeFileSync(imagePath, buffer);
 
-                const analysisResponse = await LeagueScoreboardAnalyzer(imagePath);
+            const analysisResponse = await LeagueScoreboardAnalyzer(imagePath);
 
-                // Skip if the image couldn't be analyzed
-                if (analysisResponse) {
-                    updateStats(analysisResponse);
-                    await message.reply(`Image processed and stats updated! Please check if stats are correct. If not contact Ricky Lao.\n${JSON.stringify(analysisResponse)}`);
-                } else {
-                    await message.reply(`Image can't be processed. Please ensure it's a clear League of Legends scoreboard.`);
-                }
-            } catch (error) {
-                console.error('Error processing image:', error);
-                if (error.code === 50013) {
-                    console.error('Missing Permissions: Please ensure the bot has "Send Messages" and "View Channel" permissions in the channel.');
-                }
+            // Skip if the image couldn't be analyzed
+            if (analysisResponse) {
+                const confirmBtn = new ButtonBuilder().setCustomId('confirm').setLabel('Update').setStyle(ButtonStyle.Success);
+                const cancelBtn = new ButtonBuilder().setCustomId('cancel').setLabel('Cancel').setStyle(ButtonStyle.Danger);
+                const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
+
+                await message.reply({ content: `Image processed and stats updated! Please react to this message if the stats are correct.\n${JSON.stringify(analysisResponse)}`, components: [row] });
+                const gameStats = path.join(__dirname, '..', 'gameStats.json');
+                fs.writeFileSync(gameStats, JSON.stringify(analysisResponse, null, 4), 'utf8');
+
+            } else {
+                await message.reply(`Image can't be processed. Please ensure it's a clear League of Legends scoreboard.`);
             }
         }
     },

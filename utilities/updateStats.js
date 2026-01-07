@@ -7,12 +7,13 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Updates the stats.json file with the provided analysis response.
+ * Updates the stats.json file with the provided analysis response in gameStats.json.
  * @param {Array<{username: string, kills: number, deaths: number, assists: number, win: boolean}>} analysisResponse - The data to update.
  * @returns {Array<Object>} The updated stats array.
  */
-function updateStats(analysisResponse) {
+function updateStats() {
     const statsPath = path.join(__dirname, '..', 'stats.json');
+    const gameStatsPath = path.join(__dirname, '..', 'gameStats.json');
     
     // Read existing stats
     let existingStats = [];
@@ -20,8 +21,11 @@ function updateStats(analysisResponse) {
         const data = fs.readFileSync(statsPath, 'utf8');
         existingStats = JSON.parse(data);
     }
+    // Read new game stats
+    const gameStatsData = fs.readFileSync(gameStatsPath, 'utf8');
+    const analysisResponse = JSON.parse(gameStatsData);
 
-    // Update stats for each player in the response
+    // Update stats for each player in the game stats
     for (const player of analysisResponse) {
         const existingPlayer = existingStats.find(
             s => s.username.toLowerCase() === player.username.toLowerCase()
@@ -49,8 +53,6 @@ function updateStats(analysisResponse) {
 
     // Write updated stats back to file
     fs.writeFileSync(statsPath, JSON.stringify(existingStats, null, 4), 'utf8');
-    
-    return existingStats;
 }
 
 module.exports = { updateStats };
