@@ -9,7 +9,6 @@ require('dotenv').config();
 const { Events, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const fs = require('fs');
 const { LeagueScoreboardAnalyzer } = require('../utilities/imageAnalyzer.js');
-const path = require('path');
 const { updateStats } = require('../utilities/updateStats.js');
 
 module.exports = {
