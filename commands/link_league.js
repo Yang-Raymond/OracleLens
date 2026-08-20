@@ -11,6 +11,33 @@ const path = require('path');
 const usersPath = path.join(__dirname, '..', 'users.json');
 
 /**
+ * Reads and parses the users.json file fresh each time.
+ * If the file does not exist, creates it with an empty array.
+ * @returns {Array<Object>} The parsed users array.
+ */
+function readUsers() {
+    try {
+        if (!fs.existsSync(usersPath)) {
+            fs.writeFileSync(usersPath, JSON.stringify([], null, 4));
+            return [];
+        }
+        const data = fs.readFileSync(usersPath, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading users.json:', error);
+        return [];
+    }
+}
+
+/**
+ * Writes the users array to users.json with formatting.
+ * @param {Array<Object>} users - The array of user objects to persist.
+ */
+function writeUsers(users) {
+    fs.writeFileSync(usersPath, JSON.stringify(users, null, 4));
+}
+
+/**
  * List of available League of Legends roles.
  * Used for role choice definitions and autocomplete filtering.
  * @type {Array<{name: string, value: string}>}
@@ -91,7 +118,7 @@ module.exports = {
             return interaction.reply({ content: 'Secondary role cannot be the same as your preferred role.', ephemeral: true });
         }
 
-        const users = JSON.parse(fs.readFileSync(usersPath));
+        const users = readUsers();
 
         // Prevent linking if the League username is already claimed by a different Discord user
         if (users.find(user => user.riot_username === leagueUsername && user.discord_uid !== interaction.user.id)) {
@@ -104,7 +131,7 @@ module.exports = {
             existingUser.riot_username = leagueUsername;
             existingUser.preferred_role = preferredRole;
             existingUser.secondary_role = secondaryRole;
-            fs.writeFileSync(usersPath, JSON.stringify(users, null, 4));
+            writeUsers(users);
             return interaction.reply({ content: 'Successfully updated your league account!', ephemeral: true });
         }
 
@@ -117,7 +144,7 @@ module.exports = {
             secondary_role: secondaryRole
         });
 
-        fs.writeFileSync(usersPath, JSON.stringify(users, null, 4));
+        writeUsers(users);
 
         await interaction.reply({ content: 'Successfully linked your league account!', ephemeral: true });
     }
