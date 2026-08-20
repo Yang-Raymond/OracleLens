@@ -1,5 +1,4 @@
 node_modules
 .env
 image
-stats.json
-gameStats.json
+*.json
