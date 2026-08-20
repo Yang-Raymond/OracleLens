@@ -3,6 +3,7 @@
  * @description Utility to analyze League of Legends scoreboard images using Google Gemini AI.
  */
 
+require('dotenv').config();
 const { GoogleGenAI } = require("@google/genai");
 const fs = require("node:fs");
 
@@ -12,7 +13,7 @@ const fs = require("node:fs");
  * @returns {Promise<Array<{username: string, kills: number, deaths: number, assists: number, win: boolean}>|null>} The analyzed data or null if not enough information.
  */
 async function LeagueScoreboardAnalyzer(imagePath) {
-    const ai = new GoogleGenAI({});
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const base64ImageFile = fs.readFileSync(imagePath, {
         encoding: "base64",
     });
@@ -38,7 +39,7 @@ If you do not have enough information or if the image doesn't look like a League
     ];
 
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.1-flash-lite",
         contents: contents,
     });
 
@@ -59,7 +60,13 @@ If you do not have enough information or if the image doesn't look like a League
     }
     
     // Parse and return the JSON array
-    return JSON.parse(jsonText);
+    try {
+        return JSON.parse(jsonText);
+    } catch (parseError) {
+        console.error('Failed to parse AI response as JSON:', parseError.message);
+        console.error('Raw response text:', text);
+        return null;
+    }
 }
 
 module.exports = { LeagueScoreboardAnalyzer };

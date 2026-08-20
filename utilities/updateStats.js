@@ -1,24 +1,47 @@
 /**
  * @file updateStats.js
  * @description Utility to update the stats.json file with new player data.
+ * Uses a simple in-process mutex to prevent race conditions on concurrent writes.
  */
 
 const fs = require('fs');
 const path = require('path');
 
+const statsPath = path.join(__dirname, '..', 'stats.json');
+
+// Simple in-process mutex to serialize concurrent writes
+let writeLock = Promise.resolve();
+
 /**
  * Updates the stats.json file with the provided analysis response.
+ * Queues updates so only one write happens at a time.
  * @param {Array<{username: string, kills: number, deaths: number, assists: number, win: boolean}>} [manualData] - The data to update. If not provided, reads from gameStats.json.
- * @returns {Array<Object>} The updated stats array.
+ * @returns {Promise<Array<Object>>} The updated stats array.
  */
 function updateStats(manualData) {
-    const statsPath = path.join(__dirname, '..', 'stats.json');
-    
+    // Chain onto the existing lock so updates run sequentially
+    writeLock = writeLock.then(() => performUpdate(manualData)).catch(err => {
+        console.error('Error during stats update:', err);
+    });
+    return writeLock;
+}
+
+/**
+ * Internal function that performs the actual read-modify-write.
+ * @param {Array<Object>|undefined} manualData
+ * @returns {Array<Object>} The updated stats array.
+ */
+function performUpdate(manualData) {
     // Read existing stats
     let existingStats = [];
-    if (fs.existsSync(statsPath)) {
-        const data = fs.readFileSync(statsPath, 'utf8');
-        existingStats = JSON.parse(data);
+    try {
+        if (fs.existsSync(statsPath)) {
+            const data = fs.readFileSync(statsPath, 'utf8');
+            existingStats = JSON.parse(data);
+        }
+    } catch (err) {
+        console.error('Error reading stats.json, starting with empty stats:', err);
+        existingStats = [];
     }
 
     let analysisResponse = manualData;
@@ -63,6 +86,7 @@ function updateStats(manualData) {
 
     // Write updated stats back to file
     fs.writeFileSync(statsPath, JSON.stringify(existingStats, null, 4), 'utf8');
+    return existingStats;
 }
 
 module.exports = { updateStats };

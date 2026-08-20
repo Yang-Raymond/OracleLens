@@ -5,8 +5,23 @@
 
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
-const stats = JSON.parse(fs.readFileSync('stats.json'));
-const usernames = stats.map(player => player.username);
+const path = require('path');
+
+const statsPath = path.join(__dirname, '..', 'stats.json');
+
+/**
+ * Reads and parses the stats.json file fresh each time.
+ * @returns {Array<Object>} The parsed stats array.
+ */
+function readStats() {
+    try {
+        const data = fs.readFileSync(statsPath, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading stats.json:', error);
+        return [];
+    }
+}
 
 module.exports = {
     /**
@@ -26,8 +41,10 @@ module.exports = {
      * @param {import('discord.js').AutocompleteInteraction} interaction - The autocomplete interaction.
      */
     async autocomplete(interaction) {
+        const stats = readStats();
         const focusedValue = interaction.options.getFocused();
-        const filtered = usernames
+        const filtered = stats
+            .map(player => player.username)
             .filter((choice) => choice.toLowerCase().startsWith(focusedValue.toLowerCase()))
             .slice(0, 25);
         await interaction.respond(filtered.map((choice) => ({ name: choice, value: choice })));
@@ -40,17 +57,20 @@ module.exports = {
      * @param {import('discord.js').ChatInputCommandInteraction} interaction - The interaction object.
      */
     async execute(interaction) {
+        const stats = readStats();
         const username = interaction.options.getString('username');
 
-        if (username) {
-            const player = stats.find(p => p.username.toLowerCase() === username.toLowerCase().trim());
-            const gamesPlayed = player.wins + player.losses;
-            const winrate = gamesPlayed > 0 ? (player.wins / gamesPlayed * 100).toFixed(2) : 0;
-            const kad = player.deaths > 0 ? ((player.kills + player.assists) / player.deaths).toFixed(2) : 'Perfect';
+        const player = stats.find(p => p.username.toLowerCase() === username.toLowerCase().trim());
 
-            await interaction.reply(`Stats for **${player.username}**:\nWins: ${player.wins}\nLosses: ${player.losses}\nGames Played: ${gamesPlayed}\nWinrate: ${winrate}%\nKills: ${player.kills}\nDeaths: ${player.deaths}\nAssists: ${player.assists}\nKA/D: ${kad}`);
-        } else {
+        if (!player) {
             await interaction.reply(`Player **${username}** not found.`);
+            return;
         }
+
+        const gamesPlayed = player.wins + player.losses;
+        const winrate = gamesPlayed > 0 ? (player.wins / gamesPlayed * 100).toFixed(2) : 0;
+        const kad = player.deaths > 0 ? ((player.kills + player.assists) / player.deaths).toFixed(2) : 'Perfect';
+
+        await interaction.reply(`Stats for **${player.username}**:\nWins: ${player.wins}\nLosses: ${player.losses}\nGames Played: ${gamesPlayed}\nWinrate: ${winrate}%\nKills: ${player.kills}\nDeaths: ${player.deaths}\nAssists: ${player.assists}\nKA/D: ${kad}`);
     }
 }
