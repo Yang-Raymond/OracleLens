@@ -22,7 +22,8 @@ module.exports = {
                 { name: 'Losses', value: 'losses' },
                 { name: 'Win Rate', value: 'winRate' },
                 { name: 'KA/D', value: 'kaD' },
-                { name: 'Games Played', value: 'gamesPlayed' }
+                { name: 'Games Played', value: 'gamesPlayed' },
+                { name: 'ELO', value: 'elo' }
             )),
 
     /**
