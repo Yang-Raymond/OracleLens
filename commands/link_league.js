@@ -12,26 +12,26 @@ const usersPath = path.join(__dirname, '..', 'users.json');
 
 /**
  * Reads and parses the users.json file fresh each time.
- * If the file does not exist, creates it with an empty array.
- * @returns {Array<Object>} The parsed users array.
+ * If the file does not exist, creates it with an empty object.
+ * @returns {Record<string, Object>} The parsed users object.
  */
 function readUsers() {
     try {
         if (!fs.existsSync(usersPath)) {
-            fs.writeFileSync(usersPath, JSON.stringify([], null, 4));
-            return [];
+            fs.writeFileSync(usersPath, JSON.stringify({}, null, 4));
+            return {};
         }
         const data = fs.readFileSync(usersPath, 'utf8');
         return JSON.parse(data);
     } catch (error) {
         console.error('Error reading users.json:', error);
-        return [];
+        return {};
     }
 }
 
 /**
- * Writes the users array to users.json with formatting.
- * @param {Array<Object>} users - The array of user objects to persist.
+ * Writes the users object to users.json with formatting.
+ * @param {Record<string, Object>} users - The object of user records to persist.
  */
 function writeUsers(users) {
     fs.writeFileSync(usersPath, JSON.stringify(users, null, 4));
@@ -121,28 +121,31 @@ module.exports = {
         const users = readUsers();
 
         // Prevent linking if the League username is already claimed by a different Discord user
-        if (users.find(user => user.riot_username === leagueUsername && user.discord_uid !== interaction.user.id)) {
+        const isClaimed = Object.entries(users).some(
+            ([uid, user]) => user.riot_username.toLowerCase() === leagueUsername.toLowerCase() && uid !== interaction.user.id
+        );
+        if (isClaimed) {
             return interaction.reply({ content: 'This league account is already linked to another discord account.', ephemeral: true });
         }
 
         // If the Discord user already exists, update their linked League account and roles
-        const existingUser = users.find(user => user.discord_uid === interaction.user.id);
-        if (existingUser) {
-            existingUser.riot_username = leagueUsername;
-            existingUser.preferred_role = preferredRole;
-            existingUser.secondary_role = secondaryRole;
+        if (users[interaction.user.id]) {
+            users[interaction.user.id].discord_username = interaction.user.username;
+            users[interaction.user.id].riot_username = leagueUsername;
+            users[interaction.user.id].preferred_role = preferredRole;
+            users[interaction.user.id].secondary_role = secondaryRole;
+
             writeUsers(users);
             return interaction.reply({ content: 'Successfully updated your league account!', ephemeral: true });
         }
 
-        // If new user, create and append their record
-        users.push({
-            discord_uid: interaction.user.id,
+        // If new user, create and set their record
+        users[interaction.user.id] = {
             discord_username: interaction.user.username,
             riot_username: leagueUsername,
             preferred_role: preferredRole,
             secondary_role: secondaryRole
-        });
+        };
 
         writeUsers(users);
 

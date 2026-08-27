@@ -11,7 +11,7 @@ const statsPath = path.join(__dirname, '..', 'stats.json');
 
 /**
  * Reads and parses the stats.json file fresh each time.
- * @returns {Array<Object>} The parsed stats array.
+ * @returns {Record<string, Object>} The parsed stats object.
  */
 function readStats() {
     try {
@@ -19,7 +19,7 @@ function readStats() {
         return JSON.parse(data);
     } catch (error) {
         console.error('Error reading stats.json:', error);
-        return [];
+        return {};
     }
 }
 
@@ -43,8 +43,7 @@ module.exports = {
     async autocomplete(interaction) {
         const stats = readStats();
         const focusedValue = interaction.options.getFocused();
-        const filtered = stats
-            .map(player => player.username)
+        const filtered = Object.keys(stats)
             .filter((choice) => choice.toLowerCase().startsWith(focusedValue.toLowerCase()))
             .slice(0, 25);
         await interaction.respond(filtered.map((choice) => ({ name: choice, value: choice })));
@@ -60,7 +59,8 @@ module.exports = {
         const stats = readStats();
         const username = interaction.options.getString('username');
 
-        const player = stats.find(p => p.username.toLowerCase() === username.toLowerCase().trim());
+        const playerKey = Object.keys(stats).find(key => key.toLowerCase() === username.toLowerCase().trim());
+        const player = playerKey ? stats[playerKey] : null;
 
         if (!player) {
             await interaction.reply(`Player **${username}** not found.`);
@@ -71,6 +71,6 @@ module.exports = {
         const winrate = gamesPlayed > 0 ? (player.wins / gamesPlayed * 100).toFixed(2) : 0;
         const kad = player.deaths > 0 ? ((player.kills + player.assists) / player.deaths).toFixed(2) : 'Perfect';
 
-        await interaction.reply(`Stats for **${player.username}**:\nWins: ${player.wins}\nLosses: ${player.losses}\nGames Played: ${gamesPlayed}\nWinrate: ${winrate}%\nKills: ${player.kills}\nDeaths: ${player.deaths}\nAssists: ${player.assists}\nKA/D: ${kad}`);
+        await interaction.reply(`Stats for **${playerKey}**:\nWins: ${player.wins}\nLosses: ${player.losses}\nGames Played: ${gamesPlayed}\nWinrate: ${winrate}%\nKills: ${player.kills}\nDeaths: ${player.deaths}\nAssists: ${player.assists}\nKA/D: ${kad}`);
     }
 }

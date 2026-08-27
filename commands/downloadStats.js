@@ -1,4 +1,8 @@
-const { SlashCommandBuilder, AttachmentBuilder, FileBuilder, MessageFlags } = require('discord.js');
+/**
+ * Allow users to download stats.json file
+ */
+
+const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()

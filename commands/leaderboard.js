@@ -1,5 +1,8 @@
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
+const path = require('path');
+
+const statsPath = path.join(__dirname, '..', 'stats.json');
 
 /**
  * Leaderboard command module.
@@ -32,11 +35,12 @@ module.exports = {
      */
     async execute(interaction) {
         const category = interaction.options.getString('category');
-        const stats = JSON.parse(fs.readFileSync('stats.json'));
+        const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
 
-        const processedStats = stats.map(player => {
+        const processedStats = Object.entries(stats).map(([username, player]) => {
             const totalGames = player.wins + player.losses;
             return {
+                username,
                 ...player,
                 winRate: totalGames > 0 ? (player.wins / totalGames) * 100 : 0,
                 kaD: player.deaths > 0 ? (player.kills + player.assists) / player.deaths : (player.kills + player.assists),
