@@ -4,7 +4,7 @@
  * (primary and secondary roles) to a user's Discord account.
  */
 
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -16,17 +16,12 @@ const usersPath = path.join(__dirname, '..', 'users.json');
  * @returns {Record<string, Object>} The parsed users object.
  */
 function readUsers() {
-    try {
-        if (!fs.existsSync(usersPath)) {
-            fs.writeFileSync(usersPath, JSON.stringify({}, null, 4));
-            return {};
-        }
-        const data = fs.readFileSync(usersPath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error('Error reading users.json:', error);
+    // Missing file => empty; read/parse error => throw (never overwrite a corrupt file)
+    if (!fs.existsSync(usersPath)) {
         return {};
     }
+    const data = fs.readFileSync(usersPath, 'utf8');
+    return JSON.parse(data);
 }
 
 /**
@@ -34,7 +29,9 @@ function readUsers() {
  * @param {Record<string, Object>} users - The object of user records to persist.
  */
 function writeUsers(users) {
-    fs.writeFileSync(usersPath, JSON.stringify(users, null, 4));
+    const tmp = `${usersPath}.${process.pid}.${Date.now()}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(users, null, 4));
+    fs.renameSync(tmp, usersPath);
 }
 
 /**
@@ -62,6 +59,7 @@ module.exports = {
             option.setName('league_username')
                 .setDescription('The username of the player')
                 .setRequired(true)
+                .setMaxLength(32)
         )
         .addStringOption(option =>
             option.setName('preferred_role')
@@ -109,23 +107,31 @@ module.exports = {
      * @param {import('discord.js').ChatInputCommandInteraction} interaction - The chat input interaction.
      */
     async execute(interaction) {
-        const leagueUsername = interaction.options.getString('league_username');
+        const leagueUsername = interaction.options.getString('league_username').trim();
         const preferredRole = interaction.options.getString('preferred_role');
-        const secondaryRole = interaction.options.getString('secondary_role');
+        const secondaryRole = interaction.options.getString('secondary_role').trim().toUpperCase();
+
+        if (leagueUsername.length === 0) {
+            return interaction.reply({ content: 'League username cannot be empty.', flags: MessageFlags.Ephemeral });
+        }
+
+        if (!ROLES.some(role => role.value === secondaryRole)) {
+            return interaction.reply({ content: 'Invalid secondary role. Choose one of: TOP, JUNGLE, MID, ADC, SUPP.', flags: MessageFlags.Ephemeral });
+        }
 
         // Disallow selecting the same role for primary and secondary
         if (preferredRole === secondaryRole) {
-            return interaction.reply({ content: 'Secondary role cannot be the same as your preferred role.', ephemeral: true });
+            return interaction.reply({ content: 'Secondary role cannot be the same as your preferred role.', flags: MessageFlags.Ephemeral });
         }
 
         const users = readUsers();
 
         // Prevent linking if the League username is already claimed by a different Discord user
         const isClaimed = Object.entries(users).some(
-            ([uid, user]) => user.riot_username.toLowerCase() === leagueUsername.toLowerCase() && uid !== interaction.user.id
+            ([uid, user]) => typeof user?.riot_username === 'string' && user.riot_username.trim().toLowerCase() === leagueUsername.toLowerCase() && uid !== interaction.user.id
         );
         if (isClaimed) {
-            return interaction.reply({ content: 'This league account is already linked to another discord account.', ephemeral: true });
+            return interaction.reply({ content: 'This league account is already linked to another discord account.', flags: MessageFlags.Ephemeral });
         }
 
         // If the Discord user already exists, update their linked League account and roles
@@ -136,7 +142,7 @@ module.exports = {
             users[interaction.user.id].secondary_role = secondaryRole;
 
             writeUsers(users);
-            return interaction.reply({ content: 'Successfully updated your league account!', ephemeral: true });
+            return interaction.reply({ content: 'Successfully updated your league account!', flags: MessageFlags.Ephemeral });
         }
 
         // If new user, create and set their record
@@ -149,6 +155,6 @@ module.exports = {
 
         writeUsers(users);
 
-        await interaction.reply({ content: 'Successfully linked your league account!', ephemeral: true });
+        await interaction.reply({ content: 'Successfully linked your league account!', flags: MessageFlags.Ephemeral });
     }
 };

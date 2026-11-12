@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -36,13 +36,20 @@ module.exports = {
      */
     async execute(interaction) {
         const category = interaction.options.getString('category');
-        const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+        let stats;
+        try {
+            stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+        } catch (error) {
+            console.error('Error reading stats.json:', error);
+            return interaction.reply({ content: 'No stats are available yet (or the stats file could not be read).', flags: MessageFlags.Ephemeral });
+        }
 
         const processedStats = Object.entries(stats).map(([username, player]) => {
             const totalGames = player.wins + player.losses;
             return {
                 username,
                 ...player,
+                elo: player.elo ?? 1000,
                 winRate: totalGames > 0 ? (player.wins / totalGames) * 100 : 0,
                 kaD: player.deaths > 0 ? (player.kills + player.assists) / player.deaths : (player.kills + player.assists),
                 gamesPlayed: totalGames

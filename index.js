@@ -17,7 +17,8 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates]
+    GatewayIntentBits.GuildVoiceStates],
+    allowedMentions: { parse: [] }
 });
 
 client.commands = new Collection();
@@ -44,12 +45,26 @@ const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.j
 for (const file of eventFiles) {
     const filePath = path.join(eventsPath, file);
     const event = require(filePath);
+    const handler = async (...args) => {
+        try {
+            await event.execute(...args);
+        } catch (error) {
+            console.error(`Error in event handler ${event.name}:`, error);
+        }
+    };
     if (event.once) {
-        client.once(event.name, (...args) => event.execute(...args));
+        client.once(event.name, handler);
     } else {
-        client.on(event.name, (...args) => event.execute(...args));
+        client.on(event.name, handler);
     }
 }
 
+client.on('error', (error) => {
+    console.error('Discord client error:', error);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled promise rejection:', reason);
+});
 
 client.login(process.env.DISCORD_BOT_TOKEN);

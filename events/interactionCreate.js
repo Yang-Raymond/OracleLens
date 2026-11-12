@@ -30,12 +30,12 @@ module.exports = {
 					await interaction.followUp({
 						content: 'There was an error while executing this command!',
 						flags: MessageFlags.Ephemeral,
-					});
+					}).catch((e) => console.error('Failed to send error followUp:', e));
 				} else {
 					await interaction.reply({
 						content: 'There was an error while executing this command!',
 						flags: MessageFlags.Ephemeral,
-					});
+					}).catch((e) => console.error('Failed to send error reply:', e));
 				}
 			}
 		} else if (interaction.isAutocomplete()) {

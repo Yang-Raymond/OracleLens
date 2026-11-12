@@ -71,6 +71,6 @@ module.exports = {
         const winrate = gamesPlayed > 0 ? (player.wins / gamesPlayed * 100).toFixed(2) : 0;
         const kad = player.deaths > 0 ? ((player.kills + player.assists) / player.deaths).toFixed(2) : 'Perfect';
 
-        await interaction.reply(`Stats for **${playerKey}**:\nWins: ${player.wins}\nLosses: ${player.losses}\nGames Played: ${gamesPlayed}\nWinrate: ${winrate}%\nKills: ${player.kills}\nDeaths: ${player.deaths}\nAssists: ${player.assists}\nKA/D: ${kad}\nELO: ${player.elo}`);
+        await interaction.reply(`Stats for **${playerKey}**:\nWins: ${player.wins}\nLosses: ${player.losses}\nGames Played: ${gamesPlayed}\nWinrate: ${winrate}%\nKills: ${player.kills}\nDeaths: ${player.deaths}\nAssists: ${player.assists}\nKA/D: ${kad}\nELO: ${player.elo ?? 1000}`);
     }
 }
