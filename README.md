@@ -68,3 +68,5 @@ node index.js
 3. **Check Leaderboards**: Use `/leaderboard category:[category]` to see the top 10 players in various categories.
 4. **Download Data**: Admins can use `/downloadstats` to get a JSON copy of the current statistics.
 
+Oracle Lens isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+
